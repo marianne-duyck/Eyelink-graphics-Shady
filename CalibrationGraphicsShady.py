@@ -1,15 +1,18 @@
 
 # Created Apr 2021 by marianne.duyck@gmail.com
-# Last updated on Apr 2021
+# Last updated on Dec 2021
 
 import Shady
 import Shady.Text
 from PIL import Image, ImageOps
-from playsound import playsound
-import numpy as np
+import audiomath as am
 import pylink
 import sys
 import os
+
+default_tar_beep = 'type.wav'
+default_done_beep = 'qbeep.wav'
+default_error_beep = 'error.wav'
 
 
 def _getTargetLayer(world):
@@ -78,7 +81,7 @@ def _handleEvents(world, event):
             keycode = pylink.ESC_KEY
         elif event.key == 'tab':
             keycode = ord('\t')
-        elif (keycode == pylink.JUNK_KEY):
+        elif event.key == pylink.JUNK_KEY:
             keycode = 0
         world.keys.append(pylink.KeyInput(keycode, mod))
 
@@ -491,7 +494,7 @@ class CalibrationGraphics(pylink.EyeLinkCustomDisplay):
 
         # target beep
         if target_beep == '':
-            self._target_beep = "type.wav"
+            self._target_beep = am.Sound(default_tar_beep)
         elif target_beep == 'off':
             self._target_beep = None
         else:
@@ -499,7 +502,7 @@ class CalibrationGraphics(pylink.EyeLinkCustomDisplay):
 
         # done beep
         if done_beep == '':
-            self._done_beep = "qbeep.wav"
+            self._done_beep = am.Sound(default_done_beep)
         elif done_beep == 'off':
             self._done_beep = None
         else:
@@ -507,7 +510,7 @@ class CalibrationGraphics(pylink.EyeLinkCustomDisplay):
 
         # error beep
         if error_beep == '':
-            self._error_beep = "error.wav"
+            self._error_beep = am.Sound(default_error_beep)
         elif error_beep == 'off':
             self._error_beep = None
         else:
@@ -576,13 +579,13 @@ class CalibrationGraphics(pylink.EyeLinkCustomDisplay):
         # sound playback should work on all platforms
         if beepid in [pylink.DC_TARG_BEEP, pylink.CAL_TARG_BEEP]:
             if self._target_beep is not None:
-                playsound(self._target_beep, block=False)
+                self._target_beep.Play(verbose=False)
         if beepid in [pylink.CAL_ERR_BEEP, pylink.DC_ERR_BEEP]:
             if self._error_beep is not None:
-                playsound(self._error_beep)
+                self._error_beep.Play(verbose=False)
         if beepid in [pylink.CAL_GOOD_BEEP, pylink.DC_GOOD_BEEP]:
             if self._done_beep is not None:
-                playsound(self._done_beep)
+                self._done_beep.Play(verbose=False)
 
 
     def image_title(self, text):
@@ -702,13 +705,13 @@ class CalibrationGraphics(pylink.EyeLinkCustomDisplay):
         '''This function is called if aborted'''
         pass
 
-def demo():
+def demo(test_secs):
     """ Short script to illustrate usage
     We connect to the tracker, open a Shady window, and then configure the
     graphics environment for calibration. Then, perform a calibration, 
     disconnects from the tracker and get eyetracker file.
     """
-
+    import time
     # connect to the tracker
     el_tracker = pylink.EyeLink()
 
@@ -745,6 +748,13 @@ def demo():
     # calibrates the tracker
     el_tracker.doTrackerSetup() 
 
+    # starts recording for test_dur
+    el_tracker.startRecording(1, 1, 1, 1)
+    t0 = time.time()
+    while time.time()-t0<test_secs:
+        pass
+    el_tracker.stopRecording()
+
     # close the data file and transfers it from the eyelink Host PC
     el_tracker.closeDataFile()
     el_tracker.receiveDataFile('test.edf', os.path.join(os.getcwd(), 'test.edf'))
@@ -758,4 +768,4 @@ def demo():
 
 
 if __name__ == '__main__':
-    demo()
+    demo(0.5)
