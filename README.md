@@ -1,4 +1,4 @@
-# shady-eyelink-graphics
+# Eyelink-graphics-Shady
 
 Module that implements interaction with Eyelink eyetracker (graphics for calibration) for [Shady](https://shady.readthedocs.io/en/release/), a python toolkit for visual stimuli display.
 
